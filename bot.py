@@ -20,40 +20,64 @@ intents.message_content = True  # Enable access to message content (required for
 # Create a bot instance with the required intents
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Function to scrape top-rated gaming news from PC Gamer
+
+# Function to scrape top-rated gaming news from multiple sources
 def scrape_top_gaming_news():
     all_news = []
-    
-    # URL of the PC Gamer games news page
-    url = 'https://pcgamer.com/games/'
-    
-    # Make a request to the website
-    response = requests.get(url)
+
+    # Scrape PC Gamer
+    pcgamer_url = 'https://pcgamer.com/games/'
+    response = requests.get(pcgamer_url)
     soup = BeautifulSoup(response.content, 'html.parser')
-    
-    # Find all articles with the class 'listingResult small result1'
+
     for article in soup.find_all('div', class_='listingResult small result1'):
-        # Extract the article title and link
         title = article.find('h3', class_='article-name').text.strip()
         link = article.find('a')['href']
-        
-        # Append the formatted news article to the list
-        all_news.append(f"{title} - {link}")
-    
+        all_news.append(f"PC Gamer: {title} - {link}")
+
+    # Scrape PlayStation Blog
+    ps_blog_url = 'https://blog.playstation.com/'
+    response = requests.get(ps_blog_url)
+    soup = BeautifulSoup(response.content, 'html.parser')
+
+    for article in soup.find_all('h2', class_='post-title'):
+        title = article.find('a').text.strip()
+        link = article.find('a')['href']
+        all_news.append(f"PlayStation Blog: {title} - {link}")
+
+    # Scrape The Verge
+    verge_url = 'https://www.theverge.com/games'
+    response = requests.get(verge_url)
+    soup = BeautifulSoup(response.content, 'html.parser')
+
+    for article in soup.find_all('h2', class_='c-entry-box--compact__title'):
+        title = article.find('a').text.strip()
+        link = article.find('a')['href']
+        all_news.append(f"The Verge: {title} - {link}")
+
+    # Scrape Gamer Rant
+    gamer_rant_url = 'https://gamerant.com/'
+    response = requests.get(gamer_rant_url)
+    soup = BeautifulSoup(response.content, 'html.parser')
+
+    for article in soup.find_all('a', class_='article-title'):
+        title = article.text.strip()
+        link = article['href']
+        all_news.append(f"Gamer Rant: {title} - {link}")
+
     return all_news
+
 
 # Event: on_ready
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
-    
-    # Immediate test: Post news as soon as the bot logs in
-    await post_news()  # This will trigger an immediate news post
 
     post_news.start()  # Start the task loop when the bot is ready
 
+
 # Task: Automatically post news every hour
-@tasks.loop(hours=1)
+@tasks.loop(hours=24)
 async def post_news():
     channel = bot.get_channel(NEWS_CHANNEL_ID)
     news_items = scrape_top_gaming_news()
@@ -63,6 +87,7 @@ async def post_news():
             await channel.send(item)
     else:
         await channel.send("No new top-rated news at the moment!")
+
 
 # Run the bot with the token from the environment variable
 bot.run(DISCORD_BOT_TOKEN)
