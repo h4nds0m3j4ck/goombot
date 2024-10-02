@@ -10,9 +10,6 @@ from dotenv import load_dotenv
 from playwright.async_api import async_playwright
 import asyncio
 
-# Import the keep_alive function from webserver.py
-from webserver import keep_alive
-
 # Load environment variables from .env file
 load_dotenv()
 
@@ -31,16 +28,8 @@ intents.message_content = True  # Enable access to message content (required for
 # Create a bot instance with the required intents
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-<<<<<<< HEAD
 # Function to scrape PC Gamer (requests + BeautifulSoup)
 async def scrape_pc_gamer(limit=5):
-=======
-# Call keep_alive() before running the bot to start the web server
-keep_alive()
-
-# Function to scrape top-rated gaming news from multiple sources
-def scrape_top_gaming_news():
->>>>>>> 680f9cdf983a28a1dc86db0343f224e2989888bd
     all_news = []
     try:
         logging.info("Scraping PC Gamer...")
