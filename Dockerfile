@@ -8,7 +8,26 @@ RUN apt-get update && apt-get install -y \
     libenchant-2-2 \
     libsecret-1-0 \
     libmanette-0.2-0 \
-    libgles2-mesa
+    libgles2-mesa \
+    libnss3 \
+    libxss1 \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libcups2 \
+    libdrm2 \
+    libxkbcommon0 \
+    libgbm1 \
+    libgtk-3-0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libxcursor1 \
+    libxi6 \
+    libpangocairo-1.0-0 \
+    libpango-1.0-0 \
+    libcairo-gobject2 \
+    libgdk-pixbuf2.0-0
 
 # Set the working directory
 WORKDIR /app
