@@ -30,7 +30,6 @@ NEWS_CHANNEL_ID = int(NEWS_CHANNEL_ID)  # Convert Channel ID to integer
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
-
 # Define the bot's intents
 intents = discord.Intents.default()
 intents.messages = True  # Enable message-related events
@@ -317,6 +316,11 @@ async def run_bot():
             break
     else:
         logging.error("Max retries reached. Shutting down.")
-    finally:
+    
+    # The finally block is outside the while-else loop to avoid syntax errors
+    try:
         await bot.close()
+    except Exception as e:
+        logging.exception("Error closing the bot:")
+
 
