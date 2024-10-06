@@ -9,6 +9,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from playwright.async_api import async_playwright
 import asyncio
+from discord.errors import HTTPException
 
 # Import keep_alive from webserver.py to keep the bot alive on deployment
 from webserver import keep_alive
@@ -16,12 +17,19 @@ from webserver import keep_alive
 # Load environment variables from .env file
 load_dotenv()
 
+# Get the bot token and channel ID from environment variables
+DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
+NEWS_CHANNEL_ID = os.getenv('NEWS_CHANNEL_ID')
+
+# Check for missing environment variables
+if not DISCORD_BOT_TOKEN or not NEWS_CHANNEL_ID:
+    raise ValueError("DISCORD_BOT_TOKEN or NEWS_CHANNEL_ID is missing from the environment variables")
+
+NEWS_CHANNEL_ID = int(NEWS_CHANNEL_ID)  # Convert Channel ID to integer
+
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
-# Get the bot token and channel ID from environment variables
-DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
-NEWS_CHANNEL_ID = int(os.getenv('NEWS_CHANNEL_ID'))  # Convert Channel ID to integer
 
 # Define the bot's intents
 intents = discord.Intents.default()
@@ -229,6 +237,16 @@ async def on_ready():
     logging.info(f"Logged in as {bot.user}")
     random_post_news.start()  # Start the task loop when the bot is ready
 
+# New: Event when the bot connects to Discord
+@bot.event
+async def on_connect():
+    logging.info("Bot connected to Discord.")
+
+# New: Event when the bot disconnects from Discord
+@bot.event
+async def on_disconnect():
+    logging.info("Bot disconnected from Discord.")
+
 
 # Task: Automatically post news at random intervals between 9 AM and 9 PM
 @tasks.loop(minutes=60)
@@ -280,4 +298,25 @@ async def news(ctx):
 
 
 # Run the bot with the token from the environment variable
-bot.run(DISCORD_BOT_TOKEN)
+async def run_bot():
+    max_retries = 5
+    retry_count = 0
+
+    while retry_count < max_retries:
+        try:
+            await bot.start(DISCORD_BOT_TOKEN)
+            break  # Exit loop if successful
+        except HTTPException as e:
+            if e.status == 429:
+                retry_after = e.retry_after
+                logging.error(f"Rate limited. Retrying after {retry_after} seconds. Retry attempt {retry_count + 1}/{max_retries}")
+                await asyncio.sleep(retry_after)
+                retry_count += 1
+        except Exception as e:
+            logging.exception("Unhandled exception:")
+            break
+    else:
+        logging.error("Max retries reached. Shutting down.")
+    finally:
+        await bot.close()
+
